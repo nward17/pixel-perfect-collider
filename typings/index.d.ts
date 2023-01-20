@@ -5,7 +5,7 @@ export declare class Collider {
     private size;
     private pixelBits;
     private isPositionSet;
-    constructor(image: HTMLImageElement);
+    constructor(image: HTMLImageElement | ImageData, useCaching?: boolean);
     setPos(x: number, y: number): void;
     setAnchor(x: number, y: number): void;
     test(other: Collider): boolean;

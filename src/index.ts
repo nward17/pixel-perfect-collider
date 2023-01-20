@@ -19,19 +19,24 @@ export class Collider {
   private pixelBits: number[][] = [];
   private isPositionSet = false;
 
-  constructor(image: HTMLImageElement) {
+  constructor(image: HTMLImageElement | ImageData, useCaching: boolean = true) {
     this.size.x = image.width;
     this.size.y = image.height;
-    if (cacheIndexProperty in image) {
-      this.pixelBits = cachedPixelBits[image[cacheIndexProperty]];
+    if (useCaching && cacheIndexProperty in image) {
+      this.pixelBits = cachedPixelBits[<any> image[cacheIndexProperty]];
       return;
     }
-    const canvas = document.createElement("canvas");
-    canvas.width = this.size.x;
-    canvas.height = this.size.y;
-    const context = canvas.getContext("2d");
-    context.drawImage(image, 0, 0);
-    const pixelData = context.getImageData(0, 0, this.size.x, this.size.y).data;
+    let pixelData: Uint8ClampedArray;
+    if ((<ImageData> image).data) {
+      pixelData = (<ImageData> image).data;
+    } else {
+      const canvas = document.createElement("canvas");
+      canvas.width = this.size.x;
+      canvas.height = this.size.y;
+      const context = canvas.getContext("2d");
+      context.drawImage(<HTMLImageElement> image, 0, 0);
+      pixelData = context.getImageData(0, 0, this.size.x, this.size.y).data;
+    }
     let pdIndex = 0;
     for (let y = 0; y < this.size.y; y++) {
       let bits = [];
@@ -61,9 +66,11 @@ export class Collider {
       }
       this.pixelBits.push(bits);
     }
-    cachedPixelBits.push(this.pixelBits);
-    (image as any)[cacheIndexProperty] = cacheIndex;
-    cacheIndex++;
+    if (useCaching) {
+      cachedPixelBits.push(this.pixelBits);
+      (image as any)[cacheIndexProperty] = cacheIndex;
+      cacheIndex++;
+    }
   }
 
   setPos(x: number, y: number) {
